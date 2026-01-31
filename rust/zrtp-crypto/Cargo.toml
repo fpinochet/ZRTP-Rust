@@ -1,0 +1,16 @@
+[package]
+name = "zrtp-crypto"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+ring.workspace = true
+aes = "0.8"
+cfb-mode = "0.8"
+x25519-dalek.workspace = true
+rand_core.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+log.workspace = true

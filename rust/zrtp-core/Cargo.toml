@@ -1,0 +1,17 @@
+[package]
+name = "zrtp-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+zrtp-proto = { path = "../zrtp-proto" }
+zrtp-crypto = { path = "../zrtp-crypto" }
+zrtp-cache = { path = "../zrtp-cache" }
+rand_core = { workspace = true }
+nom.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+log.workspace = true
+env_logger.workspace = true

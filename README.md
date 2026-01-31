@@ -1,9 +1,51 @@
-## GNU ZRTP C++
+# GNU ZRTP C++ & Rust Port
+
+> [!IMPORTANT]
+> **Project Update: Transitioning to Rust**
+> This project is currently being ported to Rust to enhance security, memory safety, and maintainability. The Rust implementation is located in the `rust/` directory and is already feature-complete for the core ZRTP Handshake (RFC 6189).
+
+Thanks Phil for PGP and ZRTP. I am helping keep the dream alive with this project. 
+
+P.S Thanks for answering my long questions back in the day with Zfone. 
+
+FP
+
+## Project Overview
 
 This package provides a library that adds ZRTP support to the GNU
 ccRTP stack and serves as library for other RTP stacks (PJSIP, GStreamer).
 Phil Zimmermann developed ZRTP to allow ad-hoc, easy to
 use key negotiation to setup Secure RTP (SRTP) sessions. 
+
+## Rust Implementation Status
+
+The Rust port (`rust/` directory) aims to provide a modern, secure, and performant alternative to the original C++ implementation. 
+
+### Key Features (Rust)
+*   **Memory Safety**: Built with safe Rust to eliminate buffer overflows and memory-related bugs.
+*   **Modern Cryptography**: Uses `X25519` for Elliptic Curve Diffie-Hellman, `SHA-256` for hashing, and `AES-CFB` for session confirmation.
+*   **Modular Architecture**:
+    *   `zrtp-proto`: Packet parsing and serialization (using `nom`).
+    *   `zrtp-crypto`: Trait-based cryptographic backends.
+    *   `zrtp-core`: The protocol state machine and engine.
+    *   `zrtp-ffi`: C-compatible interface for integration with C/C++ projects.
+*   **Verified Handshake**: Currently supports a full DH-based handshake from discovery to secure state with SAS agreement.
+
+## Development Phases
+
+The project follows a structured implementation plan:
+
+1.  **Phase 1: Research & Setup** [Completed] - Architecture design and workspace initialization.
+2.  **Phase 2: Protocol Foundation** [Completed] - RFC 6189 packet parsing and serialization.
+3.  **Phase 3: State Machine & Crypto Base** [Completed] - Core engine logic and initial crypto traits.
+4.  **Phase 4: Secure Handshake** [Completed] - DH exchange, KDF integration, SAS rendering, and encrypted confirmation.
+5.  **Phase 5: FFI & Integration** [In Progress] - Finalizing the C-wrapper and creating interoperability examples.
+6.  **Phase 6: Advanced Features** [Planned] - Multi-stream mode, Preshared mode, and advanced cipher support.
+
+---
+
+## GNU ZRTP C++ (Original Implementation)
+*The following information refers to the original C++ library.*
 
 The GNU ZRTP implementation is compliant to [RFC 6189][] and adds some more
 algorithms. Currently GNU ZRTP C++ supports the following features:

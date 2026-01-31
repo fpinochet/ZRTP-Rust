@@ -1,0 +1,13 @@
+[package]
+name = "zrtp-cache"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+rusqlite.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+log.workspace = true
+serde = { version = "1.0", features = ["derive"] }

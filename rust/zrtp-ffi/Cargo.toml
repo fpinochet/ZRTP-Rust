@@ -1,0 +1,20 @@
+[package]
+name = "zrtp-ffi"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["staticlib", "cdylib"]
+
+[dependencies]
+zrtp-core = { path = "../zrtp-core" }
+zrtp-crypto = { path = "../zrtp-crypto" }
+zrtp-proto = { path = "../zrtp-proto" }
+libc = "0.2"
+anyhow.workspace = true
+log.workspace = true
+
+[build-dependencies]
+cbindgen = "0.26"

@@ -1,0 +1,30 @@
+[workspace]
+members = [
+    "zrtp-proto",
+    "zrtp-crypto",
+    "zrtp-cache",
+    "zrtp-core",
+    "zrtp-ffi",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Werner Dittmann", "Francisco Pinochet"]
+license = "Apache-2.0"
+repository = "https://github.com/fpinochet/ZRTPCPPtoRust"
+description = "A Rust implementation of the ZRTP protocol (RFC 6189)"
+
+[workspace.dependencies]
+ring = "0.17"
+x25519-dalek = { version = "2.0", features = ["getrandom"] }
+rand_core = { version = "0.6", features = ["getrandom"] }
+nom = "7.1"
+anyhow = "1.0"
+thiserror = "1.0"
+log = "0.4"
+env_logger = "0.11"
+byteorder = "1.5"
+crc = "3.2"
+rusqlite = "0.31"
