@@ -12,6 +12,7 @@ crate-type = ["staticlib", "cdylib"]
 zrtp-core = { path = "../zrtp-core" }
 zrtp-crypto = { path = "../zrtp-crypto" }
 zrtp-proto = { path = "../zrtp-proto" }
+zrtp-cache = { path = "../zrtp-cache" }
 libc = "0.2"
 anyhow.workspace = true
 log.workspace = true

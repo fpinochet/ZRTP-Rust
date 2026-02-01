@@ -40,6 +40,8 @@ pub struct DHPartPacket {
     pub pbx_secret_id: [u8; 8],
     /// The DH public value.
     pub public_value: Vec<u8>,
+    /// The HMAC of the packet.
+    pub mac: [u8; 8],
 }
 
 impl DHPartPacket {
@@ -72,10 +74,13 @@ impl DHPartPacket {
         let mut pbx_secret_id = [0u8; 8];
         pbx_secret_id.copy_from_slice(pbx_secret_id_bytes);
 
-        // Remaining bytes are the public value
-        // Length of public value = TotalLengthWords * 4 - (Header(12) + H1(32) + 4IDs(32)) = L * 4 - 76
-        let pub_val_len = (header.length as usize * 4).saturating_sub(76);
+        // Public value length: Total - Header(12) - H1(32) - 4IDs(32) - MAC(8) = Total - 84
+        let pub_val_len = (header.length as usize * 4).saturating_sub(84);
         let (input, public_value_bytes) = take(pub_val_len)(input)?;
+        
+        let (input, mac_bytes) = take(8usize)(input)?;
+        let mut mac = [0u8; 8];
+        mac.copy_from_slice(mac_bytes);
 
         Ok((input, Self {
             header,
@@ -85,6 +90,7 @@ impl DHPartPacket {
             aux_secret_id,
             pbx_secret_id,
             public_value: public_value_bytes.to_vec(),
+            mac,
         }))
     }
 
@@ -97,6 +103,7 @@ impl DHPartPacket {
         bytes.extend_from_slice(&self.aux_secret_id);
         bytes.extend_from_slice(&self.pbx_secret_id);
         bytes.extend_from_slice(&self.public_value);
+        bytes.extend_from_slice(&self.mac);
         bytes
     }
 }
@@ -110,7 +117,7 @@ mod tests {
         let dh = DHPartPacket {
             header: ZrtpPacketHeader {
                 zrtp_id: crate::packets::header::ZRTP_ID,
-                length: 22,
+                length: 23, // 84 (fixed) + 8 (dummy pub) = 92 bytes / 4 = 23 words
                 message_type: DHPartPacket::MESSAGE_TYPE_DH1,
             },
             hash_h1: [0x66; 32],
@@ -118,6 +125,8 @@ mod tests {
             rs2_id: [0x88; 8],
             aux_secret_id: [0x99; 8],
             pbx_secret_id: [0xAA; 8],
+            public_value: vec![0xBB; 8],
+            mac: [0xCC; 8],
         };
         
         let bytes = dh.to_bytes();
@@ -125,6 +134,7 @@ mod tests {
         
         assert_eq!(rem.len(), 0);
         assert_eq!(parsed.hash_h1, dh.hash_h1);
-        assert_eq!(parsed.rs1_id, dh.rs1_id);
+        assert_eq!(parsed.public_value, dh.public_value);
+        assert_eq!(parsed.mac, dh.mac);
     }
 }

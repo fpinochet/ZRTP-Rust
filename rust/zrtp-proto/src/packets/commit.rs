@@ -131,7 +131,7 @@ mod tests {
         let commit = CommitPacket {
             header: ZrtpPacketHeader {
                 zrtp_id: crate::packets::header::ZRTP_ID,
-                length: 25,
+                length: 29,
                 message_type: CommitPacket::MESSAGE_TYPE,
             },
             hash_h2: [0x22; 32],

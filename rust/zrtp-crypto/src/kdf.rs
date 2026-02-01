@@ -136,7 +136,7 @@ mod tests {
         let s0 = derive_s0(
             &hash,
             &dh_result,
-            b"ZRTP KDF",
+            b"ZRTP-HMAC-KDF",
             &zid_i,
             &zid_r,
             &total_hash,

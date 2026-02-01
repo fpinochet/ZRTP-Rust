@@ -72,3 +72,8 @@ pub enum ZrtpEvent {
     /// Protocol error occurred.
     Error(u32),
 }
+/// Protocol observer for state changes and events.
+pub trait ZrtpObserver: Send + Sync {
+    /// Called when the protocol changes state.
+    fn on_state_change(&self, state: ZrtpState);
+}

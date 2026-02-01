@@ -19,17 +19,20 @@ use zrtp_crypto::backends::{Sha256, X25519};
 
 #[test]
 fn test_full_zrtp_handshake() {
+    let _ = env_logger::builder().is_test(true).try_init();
     let mut alice = ZrtpContext::new(
         [0x11; 12],
         Box::new(Sha256),
-        Box::new(X25519::default()),
-        Box::new(zrtp_crypto::backends::AesCfb128)
+        Box::new(zrtp_crypto::backends::X25519::default()),
+        Box::new(zrtp_crypto::backends::AesCfb128),
+        Box::new(zrtp_cache::InMemoryCache::new())
     );
     let mut bob = ZrtpContext::new(
-        [0x22; 12],
-        Box::new(Sha256),
-        Box::new(X25519::default()),
-        Box::new(zrtp_crypto::backends::AesCfb128)
+        [2u8; 12],
+        Box::new(zrtp_crypto::backends::Sha256),
+        Box::new(zrtp_crypto::backends::X25519::default()),
+        Box::new(zrtp_crypto::backends::AesCfb128),
+        Box::new(zrtp_cache::InMemoryCache::new())
     );
 
     // 1. Initial Start

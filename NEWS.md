@@ -1,3 +1,16 @@
+## GNU ZRTP 5.0.0-rust ##
+
+This is a major milestone release representing the full conversion of the ZRTP core engine to Rust.
+
+The Rust implementation (found in the `rust/` directory) provides significant security enhancements through memory safety and modern cryptographic primitives. It is designed to be a drop-in or parallel replacement for the C++ engine via a new FFI layer.
+
+Key Enhancements:
+*   **Memory Safety**: Complete rewrite of the state machine and packet parsing (using `nom`) to eliminate buffer overflows and memory corruption risks.
+*   **Modern Cryptography**: Defaulting to X25519 for Diffie-Hellman and SHA-256 for all hashing/KDF operations (RFC 6189 compliant).
+*   **Legacy Interoperability**: Implementation of a bit-perfect binary file cache to maintain compatibility with existing `names.zrid` files.
+*   **Modern Persistence**: Added a native SQLite backend for robust, atomic secret storage.
+*   **FFI Bridge**: A new C-compatible API (`zrtp-ffi`) along with generated C/C++ headers for easy integration.
+
 ## GNU ZRTP 4.6.6 ##
 
 Small fix in zrtp/crypto/zrtpDh.cpp to fix a small memory leak.

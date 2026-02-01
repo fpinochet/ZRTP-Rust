@@ -27,6 +27,12 @@ pub mod other;
 pub use header::{ZrtpPacketHeader, ZRTP_MAGIC, ZRTP_ID};
 pub use hello::HelloPacket;
 pub use commit::CommitPacket;
+/// The DHPart packet is used to exchange Diffie-Hellman public values.
+///
+/// Defined in RFC 6189 Section 5.5 and 5.6 (DHPart1 and DHPart2).
 pub use dh_part::DHPartPacket;
+/// The Confirm packet is used to confirm the Diffie-Hellman key exchange.
+///
+/// Defined in RFC 6189 Section 5.7 (Confirm1 and Confirm2).
 pub use confirm::ConfirmPacket;
 pub use other::{GoClearPacket, ErrorPacket, GenericAckPacket};
