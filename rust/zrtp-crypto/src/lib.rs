@@ -21,11 +21,14 @@
 //! encryption, along with their implementations and ZRTP-specific key 
 //! derivation functions.
 
+pub mod utils;
 pub mod traits;
 pub mod backends;
 pub mod kdf;
 pub mod sas;
+pub mod ratchet;
 
 pub use traits::*;
 pub use kdf::*;
 pub use sas::*;
+pub use ratchet::*;

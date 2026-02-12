@@ -33,6 +33,7 @@ pub trait ZidCache {
 /// A simple in-memory implementation of the [`ZidCache`] trait.
 /// 
 /// Note: This implementation does not persist data to disk.
+#[derive(Debug, Clone, Default)]
 pub struct InMemoryCache {
     cache: HashMap<([u8; 12], String), Vec<u8>>,
 }
@@ -147,6 +148,7 @@ pub struct BinaryFileCache {
 impl BinaryFileCache {
     /// Opens or creates a binary ZID cache at the given path.
     pub fn new<P: AsRef<std::path::Path>>(path: P, own_zid: Option<[u8; 12]>) -> anyhow::Result<Self> {
+        #[allow(clippy::suspicious_open_options)]
         let mut file = OpenOptions::new()
             .read(true)
             .write(true)
@@ -193,7 +195,7 @@ impl BinaryFileCache {
 impl ZidCache for BinaryFileCache {
     fn get_secret(&self, zid: &[u8; 12], name: &str) -> Option<Vec<u8>> {
         let mut file = self.file.lock().unwrap();
-        let (rec, _) = Self::find_record(&mut *file, zid)?;
+        let (rec, _) = Self::find_record(&mut file, zid)?;
         match name {
             "rs1" => Some(rec.rs1_data.to_vec()),
             "rs2" => Some(rec.rs2_data.to_vec()),
@@ -204,7 +206,7 @@ impl ZidCache for BinaryFileCache {
 
     fn store_secret(&mut self, zid: &[u8; 12], name: &str, secret: &[u8]) {
         let mut file = self.file.lock().unwrap();
-        let (mut rec, offset) = Self::find_record(&mut *file, zid).unwrap_or_else(|| {
+        let (mut rec, offset) = Self::find_record(&mut file, zid).unwrap_or_else(|| {
             let mut r = ZidRecordV2::new_empty();
             r.flags = ZidRecordV2::VALID;
             r.identifier = *zid;

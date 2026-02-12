@@ -19,7 +19,7 @@
 //! This crate provides a C-compatible interface to the `zrtp-core` engine,
 //! allowing it to be integrated into C and C++ projects.
 
-use zrtp_core::{ZrtpContext, ZrtpEvent};
+use zrtp_core::{ZrtpContext, ZrtpEvent, ZrtpOptions};
 use zrtp_crypto::backends::{Sha256, X25519};
 use libc::size_t;
 use std::ptr;
@@ -42,7 +42,7 @@ pub type ZrtpStatusCallback = extern "C" fn(ctx: *mut ZrtpContext, state: i32, u
 /// # Safety
 /// The `zid` pointer must point to at least 12 bytes of valid memory.
 #[no_mangle]
-pub extern "C" fn zrtp_context_new(zid: *const u8) -> *mut ZrtpContext {
+pub unsafe extern "C" fn zrtp_context_new(zid: *const u8) -> *mut ZrtpContext {
     if zid.is_null() {
         return ptr::null_mut();
     }
@@ -56,7 +56,8 @@ pub extern "C" fn zrtp_context_new(zid: *const u8) -> *mut ZrtpContext {
         Box::new(Sha256),
         Box::new(X25519::default()),
         Box::new(zrtp_crypto::backends::AesCfb128),
-        Box::new(zrtp_cache::InMemoryCache::new())
+        Box::new(zrtp_cache::InMemoryCache::new()),
+        ZrtpOptions::default()
     );
     Box::into_raw(Box::new(context))
 }
@@ -75,7 +76,7 @@ pub extern "C" fn zrtp_context_new(zid: *const u8) -> *mut ZrtpContext {
 /// # Safety
 /// The `zid` pointer must point to at least 12 bytes. `db_path` must be a null-terminated string.
 #[no_mangle]
-pub extern "C" fn zrtp_context_new_with_db(zid: *const u8, db_path: *const libc::c_char) -> *mut ZrtpContext {
+pub unsafe extern "C" fn zrtp_context_new_with_db(zid: *const u8, db_path: *const libc::c_char) -> *mut ZrtpContext {
     let zid_arr = unsafe {
         let mut arr = [0u8; 12];
         if !zid.is_null() {
@@ -101,7 +102,8 @@ pub extern "C" fn zrtp_context_new_with_db(zid: *const u8, db_path: *const libc:
         Box::new(Sha256),
         Box::new(X25519::default()),
         Box::new(zrtp_crypto::backends::AesCfb128),
-        cache
+        cache,
+        ZrtpOptions::default()
     );
     Box::into_raw(Box::new(context))
 }
@@ -120,7 +122,7 @@ pub extern "C" fn zrtp_context_new_with_db(zid: *const u8, db_path: *const libc:
 /// # Safety
 /// The `zid` pointer must point to at least 12 bytes. `file_path` must be a null-terminated string.
 #[no_mangle]
-pub extern "C" fn zrtp_context_new_with_file(zid: *const u8, file_path: *const libc::c_char) -> *mut ZrtpContext {
+pub unsafe extern "C" fn zrtp_context_new_with_file(zid: *const u8, file_path: *const libc::c_char) -> *mut ZrtpContext {
     let zid_arr = unsafe {
         let mut arr = [0u8; 12];
         if !zid.is_null() {
@@ -146,7 +148,8 @@ pub extern "C" fn zrtp_context_new_with_file(zid: *const u8, file_path: *const l
         Box::new(Sha256),
         Box::new(X25519::default()),
         Box::new(zrtp_crypto::backends::AesCfb128),
-        cache
+        cache,
+        ZrtpOptions::default()
     );
     Box::into_raw(Box::new(context))
 }
@@ -156,7 +159,7 @@ pub extern "C" fn zrtp_context_new_with_file(zid: *const u8, file_path: *const l
 /// # Safety
 /// The `ctx` pointer must be a valid pointer to a `ZrtpContext` or null.
 #[no_mangle]
-pub extern "C" fn zrtp_context_free(ctx: *mut ZrtpContext) {
+pub unsafe extern "C" fn zrtp_context_free(ctx: *mut ZrtpContext) {
     if !ctx.is_null() {
         unsafe {
             let _ = Box::from_raw(ctx);
@@ -178,7 +181,7 @@ pub extern "C" fn zrtp_context_free(ctx: *mut ZrtpContext) {
 /// The `ctx` pointer must be valid. If `data` is not null, it must point to at 
 /// least `len` bytes of valid memory.
 #[no_mangle]
-pub extern "C" fn zrtp_handle_event(
+pub unsafe extern "C" fn zrtp_handle_event(
     ctx: *mut ZrtpContext,
     event: i32,
     data: *const u8,
@@ -222,7 +225,7 @@ pub extern "C" fn zrtp_handle_event(
 /// The `ctx` pointer must be valid. `buf` must point to at least `max_len` bytes 
 /// of valid memory.
 #[no_mangle]
-pub extern "C" fn zrtp_get_message(
+pub unsafe extern "C" fn zrtp_get_message(
     ctx: *mut ZrtpContext,
     buf: *mut u8,
     max_len: size_t
@@ -250,7 +253,7 @@ pub extern "C" fn zrtp_get_message(
 /// # Safety
 /// The `ctx` pointer must be valid.
 #[no_mangle]
-pub extern "C" fn zrtp_get_state(ctx: *mut ZrtpContext) -> i32 {
+pub unsafe extern "C" fn zrtp_get_state(ctx: *mut ZrtpContext) -> i32 {
     let context = unsafe {
         match ctx.as_ref() {
             Some(c) => c,
@@ -280,7 +283,7 @@ impl zrtp_core::state::ZrtpObserver for FfiObserver {
 /// # Safety
 /// The `ctx` pointer must be valid.
 #[no_mangle]
-pub extern "C" fn zrtp_set_status_callback(
+pub unsafe extern "C" fn zrtp_set_status_callback(
     ctx: *mut ZrtpContext,
     callback: ZrtpStatusCallback,
     user_data: *mut libc::c_void
@@ -305,7 +308,7 @@ pub extern "C" fn zrtp_set_status_callback(
 /// # Safety
 /// The `ctx` pointer must be valid. `buf` must point to at least 4 bytes.
 #[no_mangle]
-pub extern "C" fn zrtp_get_sas_string(ctx: *mut ZrtpContext, buf: *mut u8) -> size_t {
+pub unsafe extern "C" fn zrtp_get_sas_string(ctx: *mut ZrtpContext, buf: *mut u8) -> size_t {
     let context = unsafe {
         match ctx.as_ref() {
             Some(c) => c,
@@ -333,7 +336,7 @@ pub extern "C" fn zrtp_get_sas_string(ctx: *mut ZrtpContext, buf: *mut u8) -> si
 /// The `ctx` pointer must be valid. `sas` must point to at least 32 bytes of 
 /// valid memory.
 #[no_mangle]
-pub extern "C" fn zrtp_get_sas(ctx: *mut ZrtpContext, sas: *mut u8) -> size_t {
+pub unsafe extern "C" fn zrtp_get_sas(ctx: *mut ZrtpContext, sas: *mut u8) -> size_t {
     let context = unsafe {
         match ctx.as_ref() {
             Some(c) => c,
@@ -356,7 +359,7 @@ pub extern "C" fn zrtp_get_sas(ctx: *mut ZrtpContext, sas: *mut u8) -> size_t {
 /// # Safety
 /// The `ctx` pointer must be valid. `key` must point to at least `key_len` bytes.
 #[no_mangle]
-pub extern "C" fn zrtp_get_srtp_key(
+pub unsafe extern "C" fn zrtp_get_srtp_key(
     ctx: *mut ZrtpContext,
     is_initiator: bool,
     key: *mut u8,
@@ -386,7 +389,7 @@ pub extern "C" fn zrtp_get_srtp_key(
 /// # Safety
 /// The `ctx` pointer must be valid. `salt` must point to at least 14 bytes.
 #[no_mangle]
-pub extern "C" fn zrtp_get_srtp_salt(
+pub unsafe extern "C" fn zrtp_get_srtp_salt(
     ctx: *mut ZrtpContext,
     is_initiator: bool,
     salt: *mut u8
@@ -405,6 +408,85 @@ pub extern "C" fn zrtp_get_srtp_salt(
             ptr::copy_nonoverlapping(src.as_ptr(), salt, len);
         }
         len
+    } else {
+        0
+    }
+}
+
+/// C-compatible options for ZRTP enhancements.
+#[repr(C)]
+pub struct ZrtpOptionsFFI {
+    pub enable_ratchet: bool,
+    pub ratchet_interval: u32,
+    pub enable_pqc_kem: bool,
+    pub enable_pqc_sig: bool,
+    pub enable_fragmentation: bool,
+    pub fragmentation_threshold: u16,
+    pub enable_adaptive_timer: bool,
+    pub enable_survival_mode: bool,
+}
+
+/// Configures the ZRTP context with modern enhancements.
+/// 
+/// # Safety
+/// The `ctx` pointer must be valid. `options` must be a valid pointer.
+#[no_mangle]
+pub unsafe extern "C" fn zrtp_context_configure(ctx: *mut ZrtpContext, options: *const ZrtpOptionsFFI) {
+    let context = unsafe {
+        match ctx.as_mut() {
+            Some(c) => c,
+            None => return,
+        }
+    };
+    let opts = unsafe { 
+        match options.as_ref() {
+            Some(o) => o,
+            None => return,
+        }
+    };
+    context.options = ZrtpOptions {
+        enable_ratchet: opts.enable_ratchet,
+        ratchet_interval: opts.ratchet_interval,
+        enable_pqc_kem: opts.enable_pqc_kem,
+        enable_pqc_sig: opts.enable_pqc_sig,
+        enable_fragmentation: opts.enable_fragmentation,
+        fragmentation_threshold: opts.fragmentation_threshold,
+        enable_adaptive_timer: opts.enable_adaptive_timer,
+        enable_survival_mode: opts.enable_survival_mode,
+    };
+}
+
+/// Advances the symmetric ratchet and retrieves the next SRTP master key.
+/// 
+/// Use this if the ratchet is enabled to update the session key periodically.
+/// 
+/// # Safety
+/// The `ctx` pointer must be valid. `key_buf` must point to at least 32 bytes.
+#[no_mangle]
+pub unsafe extern "C" fn zrtp_ratchet_next_key(
+    ctx: *mut ZrtpContext,
+    is_initiator: bool,
+    key_buf: *mut u8
+) -> size_t {
+    let context = unsafe {
+        match ctx.as_mut() {
+            Some(c) => c,
+            None => return 0,
+        }
+    };
+
+    let ratchet = if is_initiator {
+        &mut context.initiator_ratchet
+    } else {
+        &mut context.responder_ratchet
+    };
+
+    if let Some(ref mut r) = ratchet {
+        let key = r.next_key(&*context.hash_provider);
+        unsafe {
+            ptr::copy_nonoverlapping(key.as_ptr(), key_buf, key.len());
+        }
+        key.len()
     } else {
         0
     }

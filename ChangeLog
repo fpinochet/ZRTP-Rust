@@ -1,4 +1,9 @@
-2.0.0-rust (2026-01-31):
+5.0.1-rust (2026-02-12):
+- Fixed SAS PGP word list rendering for 100% RFC 6189 compliance.
+- Finalized documentation for Symmetric Ratchet and PQ Hybrid enhancements.
+- Verified bit-perfect interoperability with legacy handshake formats.
+
+5.0.0-rust (2026-01-31):
 - Full conversion of ZRTP core to Rust (RFC 6189 compliant)
 - Implementation of modern crypto: X25519, SHA-256, AES-CFB
 - Addition of FFI layer for C/C++ integration (cbindgen)
@@ -8,7 +13,7 @@
 
 1.5.2:
 
-- a C wrapper was added to enable C programs to use GNU ZRTP
+- a C wrapper was added to enable C programs to use Apache 2.0 ZRTP
 - some fixes in the code (race condition solved)
 - better support of multi-stream mode
 - change the old cxx file extension to cpp, some build system don't

@@ -45,6 +45,41 @@ pub trait DiffieHellman {
     fn name(&self) -> &'static str;
 }
 
+/// Trait for Post-Quantum Key Encapsulation Mechanisms (KEM).
+/// 
+/// Supported algorithms include ML-KEM-768 (Kyber).
+pub trait KeyEncapsulation {
+    /// Generates a keypair and returns the public key and private key.
+    fn generate_keypair(&mut self) -> Result<(Vec<u8>, Vec<u8>)>;
+    /// Encapsulates a shared secret using the peer's public key.
+    /// Returns (ciphertext, shared_secret).
+    fn encapsulate(&self, peer_public_key: &[u8]) -> Result<(Vec<u8>, Vec<u8>)>;
+    /// Decapsulates the shared secret using our private key and the provided ciphertext.
+    fn decapsulate(&self, private_key: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>>;
+    /// Returns the algorithm name (e.g., "KYB1").
+    fn name(&self) -> &'static str;
+    /// Returns the length of the public key in bytes.
+    fn public_key_len(&self) -> usize;
+    /// Returns the length of the ciphertext in bytes.
+    fn ciphertext_len(&self) -> usize;
+}
+
+/// Trait for digital signatures, used for ephemeral key authentication.
+/// 
+/// Supported algorithms include Falcon-512.
+pub trait Signature {
+    /// Generates a signing keypair.
+    fn generate_keypair(&mut self) -> Result<(Vec<u8>, Vec<u8>)>;
+    /// Signs the given data using the private key.
+    fn sign(&self, private_key: &[u8], data: &[u8]) -> Result<Vec<u8>>;
+    /// Verifies the signature of the data using the public key.
+    fn verify(&self, public_key: &[u8], data: &[u8], signature: &[u8]) -> Result<()>;
+    /// Returns the algorithm name (e.g., "FAL5").
+    fn name(&self) -> &'static str;
+    /// Returns the signature length in bytes.
+    fn signature_len(&self) -> usize;
+}
+
 /// Trait for symmetric encryption ciphers used for Confirm packets.
 pub trait Cipher {
     /// Encrypts the plaintext using the given key and IV.

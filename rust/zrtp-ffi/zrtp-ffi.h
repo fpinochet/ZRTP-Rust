@@ -20,9 +20,30 @@ struct ZrtpContext;
 /// Callback for state changes.
 using ZrtpStatusCallback = void(*)(ZrtpContext *ctx, int32_t state, void *user_data);
 
+/// C-compatible options for ZRTP enhancements.
+struct ZrtpOptionsFFI {
+  bool enable_ratchet;
+  uint32_t ratchet_interval;
+  bool enable_pqc_kem;
+  bool enable_pqc_sig;
+  bool enable_fragmentation;
+  uint16_t fragmentation_threshold;
+  bool enable_adaptive_timer;
+  bool enable_survival_mode;
+};
+
 extern "C" {
 
 /// Creates a new ZRTP context for a given ZID.
+///
+/// This is the base function for creating a context without persistent storage.
+/// In-memory caching will be used.
+///
+/// # Arguments
+/// * `zid` - Pointer to a 12-byte array containing the own ZID.
+///
+/// # Returns
+/// A pointer to the newly created `ZrtpContext`. Must be freed using `zrtp_context_free`.
 ///
 /// # Safety
 /// The `zid` pointer must point to at least 12 bytes of valid memory.
@@ -30,11 +51,29 @@ ZrtpContext *zrtp_context_new(const uint8_t *zid);
 
 /// Creates a new ZRTP context with a persistent SQLite cache.
 ///
+/// Use this if you want to store retained secrets in a modern, atomic database.
+///
+/// # Arguments
+/// * `zid` - Pointer to a 12-byte array containing the own ZID.
+/// * `db_path` - Null-terminated string containing the path to the SQLite file.
+///
+/// # Returns
+/// A pointer to the `ZrtpContext`, or NULL if the database could not be opened.
+///
 /// # Safety
 /// The `zid` pointer must point to at least 12 bytes. `db_path` must be a null-terminated string.
 ZrtpContext *zrtp_context_new_with_db(const uint8_t *zid, const char *db_path);
 
 /// Creates a new ZRTP context with a legacy binary file cache.
+///
+/// Use this for strict bit-compatible interoperability with the legacy C++ `names.zrid` format.
+///
+/// # Arguments
+/// * `zid` - Pointer to a 12-byte array containing the own ZID.
+/// * `file_path` - Null-terminated string containing the path to the binary cache file.
+///
+/// # Returns
+/// A pointer to the `ZrtpContext`, or NULL if the file could not be opened.
 ///
 /// # Safety
 /// The `zid` pointer must point to at least 12 bytes. `file_path` must be a null-terminated string.
@@ -47,6 +86,14 @@ ZrtpContext *zrtp_context_new_with_file(const uint8_t *zid, const char *file_pat
 void zrtp_context_free(ZrtpContext *ctx);
 
 /// Handles a protocol event and optional packet data.
+///
+/// This is the main entry point for processing incoming packets and timer events.
+///
+/// # Arguments
+/// * `ctx` - Pointer to the `ZrtpContext`.
+/// * `event` - The event ID (e.g., 0=Start, 1=HelloReceived).
+/// * `data` - Pointer to the raw packet buffer (can be NULL for events without packets).
+/// * `len` - Length of the data buffer.
 ///
 /// # Safety
 /// The `ctx` pointer must be valid. If `data` is not null, it must point to at
@@ -103,6 +150,20 @@ size_t zrtp_get_srtp_key(ZrtpContext *ctx, bool is_initiator, uint8_t *key, size
 /// # Safety
 /// The `ctx` pointer must be valid. `salt` must point to at least 14 bytes.
 size_t zrtp_get_srtp_salt(ZrtpContext *ctx, bool is_initiator, uint8_t *salt);
+
+/// Configures the ZRTP context with modern enhancements.
+///
+/// # Safety
+/// The `ctx` pointer must be valid. `options` must be a valid pointer.
+void zrtp_context_configure(ZrtpContext *ctx, const ZrtpOptionsFFI *options);
+
+/// Advances the symmetric ratchet and retrieves the next SRTP master key.
+///
+/// Use this if the ratchet is enabled to update the session key periodically.
+///
+/// # Safety
+/// The `ctx` pointer must be valid. `key_buf` must point to at least 32 bytes.
+size_t zrtp_ratchet_next_key(ZrtpContext *ctx, bool is_initiator, uint8_t *key_buf);
 
 } // extern "C"
 

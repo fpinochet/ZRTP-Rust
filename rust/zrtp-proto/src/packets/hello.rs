@@ -57,6 +57,13 @@ impl HelloPacket {
     /// The message type identifier for Hello packets.
     pub const MESSAGE_TYPE: [u8; 8] = *b"Hello   ";
 
+    /// Algorithm Identifier for Kyber-768 (KEM)
+    pub const ALGO_KEM_KYBER768: [u8; 4] = *b"KYB1";
+    /// Algorithm Identifier for Falcon-512 (Signature)
+    pub const ALGO_SIG_FALCON512: [u8; 4] = *b"FAL5";
+    /// Algorithm Identifier for Symmetric Ratchet support
+    pub const ALGO_RATCHET_HMAC256: [u8; 4] = *b"RTCH";
+
     /// Parses a Hello packet from the given input bytes.
     pub fn parse(input: &[u8]) -> IResult<&[u8], Self> {
         let (input, header) = ZrtpPacketHeader::parse(input)?;
@@ -118,7 +125,7 @@ impl HelloPacket {
         
         bytes.push((self.num_hash << 4) | (self.num_cipher & 0x0F));
         bytes.push((self.num_auth << 4) | (self.num_key_agreement & 0x0F));
-        bytes.push((self.num_sas << 4)); // and 4 bits reserved
+        bytes.push(self.num_sas << 4); // and 4 bits reserved
 
         bytes.extend_from_slice(&self.algs);
         bytes.extend_from_slice(&self.hmac);

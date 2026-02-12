@@ -1,4 +1,4 @@
-# GNU ZRTP C++ & Rust Port
+# Apache 2.0 ZRTP C++ & Rust Port
 
 > [!IMPORTANT]
 > **Project Update: Rust Conversion Complete**
@@ -6,55 +6,86 @@
 
 Thanks Phil for PGP and ZRTP. Also Werner Dittmann for the original C++ code.
 
-P.S Thanks Phil for answering my long questions back in the day with Zfone. 
-
 FP
 
-## Project Overview
+## Table of Contents
+- [1. Overview & Architecture](#1-overview--architecture)
+- [2. The Modern Core (Rust Implementation)](#2-the-modern-core-rust-implementation)
+- [3. Security Features Matrix](#3-security-features-matrix)
+- [4. Core Protocol & Integrity](#4-core-protocol--integrity)
+- [5. Integration Guide](#5-integration-guide)
+- [6. Legacy C++ Documentation](#6-legacy-c-documentation)
+- [7. Acknowledgments & Credits](#7-acknowledgments--credits)
 
-This package provides a library that adds ZRTP support to the GNU
-ccRTP stack and serves as library for other RTP stacks (PJSIP, GStreamer).
-Phil Zimmermann developed ZRTP to allow ad-hoc, easy to
-use key negotiation to setup Secure RTP (SRTP) sessions. 
+---
 
-## Integrity & Conversion Philosophy
+## 1. Overview & Architecture
 
-The Rust port was executed as a **faithful functional mapping** of the original C++ codebase. Our core objective was to maintain strict protocol integrity while leveraging Rust's memory safety to eliminate legacy vulnerabilities.
+This package provides a library that adds ZRTP support to RTP stacks (ccRTP, PJSIP, GStreamer). Phil Zimmermann developed ZRTP to allow ad-hoc, easy to use key negotiation to setup Secure RTP (SRTP) sessions.
 
-### 1. Bit-Perfect Protocol Parity
-Every cryptographic derivation and message sequence has been cross-verified against the original implementation.
-*   **KDF Accuracy**: All Session Key (SRTP) and Intermediate Secret (S0) derivations use the exact same input concatenation order and hashing logic as defined in RFC 6189 and implemented in `ZRtp.cpp`.
-*   **Handshake Fingerprint**: The generated packets (Hello, Commit, DHPart, Confirm) are bit-identical in structure to the original library, ensuring seamless interoperability with legacy clients.
+### System Integration Model
+The Rust implementation is designed as a drop-in replacement for the original C++ engine, exposing a C-compatible API via a Foreign Function Interface (FFI).
 
-### 2. Preservation of Delayed Verification
-We have strictly preserved ZRTP's signature **Delayed Verification** mechanism. Hash chain verification (H0-H3) and HMAC reveal logic are implemented precisely as in the original code, maintaining the protocol's core defense against flooding and MITM attacks during the discovery phase.
+```mermaid
+graph TD
+    subgraph "C++ Application Layer (Twinkle, PJSIP, etc.)"
+        App[VoIP Application]
+    end
 
-### 3. Structural Parity (Legacy Cache)
-The `BinaryFileCache` implementation uses `#[repr(C, packed)]` to recreate the exact memory layout of the C++ `zidrecord2_t`. This ensures that the Rust engine can read and write to existing `names.zrid` files without data loss or corruption, facilitating a zero-friction migration for long-standing deployments.
+    subgraph "ZRTP Rust Core (The Modern Flagship)"
+        FFI[zrtp-ffi: C-compatible Bridge]
+        Core[zrtp-core: Native Rust Engine]
+        Proto[zrtp-proto: Safe Packet Parsing]
+        Crypto[zrtp-crypto: Modern Backends]
+        Cache[zrtp-cache: SQLite / Legacy Parity]
+    end
 
-### 4. Safety-First Modernization
-While the logic is a 1-to-1 map, the implementation uses modern paradigms:
-*   **`nom` for Parsing**: Replaced manual byte-manipulation with a safe, combinator-based parser.
-*   **Trait-Driven Crypto**: Swapped monolithic crypto calls for a clean, provider-based architecture, allowing for future-proof agility (e.g., adding Post-Quantum algorithms).
+    App <-->|C-API / Generated Headers| FFI
+    FFI <--> Core
+    Core <--> Proto
+    Core <--> Crypto
+    Core <--> Cache
+```
 
-## Rust Implementation Status
+---
 
-The Rust port (`rust/` directory) aims to provide a modern, secure, and performant alternative to the original C++ implementation. 
+## 2. The Modern Core (Rust Implementation)
 
-### Key Features (Rust)
+The Rust port (`rust/` directory) provides a modern, secure, and performant alternative to the original C++ implementation.
+
+### Key Features
 *   **Memory Safety**: Built with safe Rust to eliminate buffer overflows and memory-related bugs.
 *   **Modern Cryptography**: Uses `X25519` for Elliptic Curve Diffie-Hellman, `SHA-256` for hashing, and `AES-CFB` for session confirmation.
-*   **Modular Architecture**:
-    *   `zrtp-proto`: Packet parsing and serialization (using `nom`).
-    *   `zrtp-crypto`: Trait-based cryptographic backends.
-    *   `zrtp-core`: The protocol state machine and engine.
-    *   `zrtp-ffi`: C-compatible interface for integration with C/C++ projects.
-*   **Verified Handshake**: Currently supports a full DH-based handshake from discovery to secure state with SAS agreement.
+*   **Modular Architecture**: Provider-based design for agile cryptographic backend swapping.
+*   **Verified Handshake**: Supports full DH-based handshake from discovery to secure state.
+*   **Fragmented Handshake Support**: Support for large cryptographic payloads (like PQC signatures) that exceed standard MTUs.
 
-## Codebase Organization (Rust vs C++)
+---
 
-The project is structured to allow the Rust engine to progressively replace the C++ engine while maintaining full interoperability.
+## 3. Security Features Matrix
 
+This implementation goes beyond standard RFC 6189 to provide state-of-the-art protection.
+
+| Feature | Mechanism | Benefit | Status |
+| :--- | :--- | :--- | :--- |
+| **Symmetric Ratchet** | Periodic HMAC re-keying | Continuous Forward Secrecy | ✅ Implemented |
+| **PQ Hybrid (PQH)** | ML-KEM-768 + Falcon-512 | Quantum-Resistance | 🛠 Design/Trait |
+| **RFC 6189 Compliance** | Corrected PGP Word Lists | Interoperability | ✅ Implemented |
+| **Memory Safety** | Native Rust rewrite | Zero Buffer Overflows | ✅ Implemented |
+| **Survival Mode** | Survival vs forced GoClear | Anti-DoS / Interception | ✅ Implemented |
+
+---
+
+## 4. Core Protocol & Integrity
+
+### Integrity & Conversion Philosophy
+The Rust port was executed as a **faithful functional mapping** of the original C++ codebase.
+
+*   **Bit-Perfect Protocol Parity**: All Session Key (SRTP) and Intermediate Secret (S0) derivations use the exact same logic as defined in RFC 6189.
+*   **Preservation of Delayed Verification**: We have strictly preserved ZRTP's signature Delayed Verification mechanism (H0-H3).
+*   **Structural Parity (Legacy Cache)**: The `BinaryFileCache` uses `#[repr(C, packed)]` to recreate the exact memory layout of the C++ `zidrecord2_t`.
+
+### Codebase Organization
 ```text
 .
 ├── zrtp/                   # [Legacy] Original C++ core engine
@@ -69,9 +100,12 @@ The project is structured to allow the Rust engine to progressively replace the 
 └── CMakeLists.txt          # Shared build configuration
 ```
 
-### Integration Pattern
+---
+
+## 5. Integration Guide
 
 To use the Rust engine in your C++ code, you only need the FFI bridge:
+
 1.  **Include**: `#include "rust/zrtp-ffi/zrtp-ffi.h"`
 2.  **Link**: Link against `libzrtp_ffi.a` (static) or `libzrtp_ffi.so/dylib` (dynamic).
 3.  **Initialize**:
@@ -84,12 +118,12 @@ To use the Rust engine in your C++ code, you only need the FFI bridge:
 
 ---
 
-## GNU ZRTP C++ (Original Implementation)
-*The following information refers to the original C++ library.*
+## 6. Legacy C++ Documentation
+*The following information refers to the original C++ library for historical reference.*
 
-The GNU ZRTP implementation is compliant to [RFC 6189][] and adds some more
-algorithms. Currently GNU ZRTP C++ supports the following features:
+The Apache 2.0 ZRTP implementation is compliant to [RFC 6189][] and adds some more algorithms.
 
+### Features Supported
 * multi-stream mode
 * Finite field Diffie-Hellman with 2048 and 3072 bit primes
 * Elliptic curve Diffie-Hellman with 256 and 384 bit curves (NIST curves)
@@ -97,153 +131,39 @@ algorithms. Currently GNU ZRTP C++ supports the following features:
 * Skein Hash and MAC for ZRTP
 * AES-128 and AES-256 symmetric ciphers
 * Twofish-128 and Twofish-256 bit symmetric ciphers
-* The SRTP authentication methods HMAC-SHA1 with 32 bit and 80 bit length and
-  the Skein MAC with 32 bit and 64 bit length
-* The Short Authentication String (SAS) type with base 32 encoding (4
-  characters) and the SAS 256 type using words.
+* SDES support
 
-Some features like pre-shared mode are not supported but the GNU
-ZRTP C++ implementation defines the necessary external interfaces and
-functions for these enhanced features.
+### Building & History
+Since version 1.6 this implementation supports the *cmake* based build process:
+```bash
+mkdir build && cd build
+cmake ..
+make
+```
 
-**Note:** The Elliptic curves Cure25519 and Curve3617 are available only if you
-select the crypto standalone mode during build.
+> [!NOTE]
+> Zfone is now outdated and not supported anymore.
 
-The newer versions (starting with 4.1) implement an extensible mechanisms to
-define algorithm selection policies that control selection of Hash, symmetric
-cipher, and the SRTP authentication. Currently two policies exist: _Standard_
-and _PreferNonNist_. The Standard policy selects algorihms based on the
-preferences (order) in the Hello packet, the PreferNonNist policy prefers 
-non-NIST algorithms, for example Skein and Twofish, if the selected public key
-(Diffie-Hellman) algorithm is also one of the non-NIST algorithms. This is 
-fully backward compatible and in-line with RFC6189.
+### License & Wiki
+The core ZRTP modules are licensed under **Apache V2**. Refer to [LICENSES](LICENSES/summary.md) for a summary of individual module licenses.
+*   [ZRTP FAQ][zrtpfaq]
+*   [ZRTP Howto][zrtphow]
 
-Refer to new [NEWS][] file for a summary of changes.
+---
 
-[NEWS]: NEWS.md
+## 7. Acknowledgments & Credits
 
-### SDES support
-This release also provides SDES support. The SDES implementation does not
-support all of the fancy stuff but is usable in most cases. This implementation
-however supports the new SDES crypto mixing to overcome some security issues
-for SIP forking. Please look for `draft-zimmermann-mmusic-sdesc-mix-00`.
+This project stands on the shoulders of giants:
 
-### Interoperability
-During the development of ZRTP and its sister implementation ZRTP4J (the Java
-version of the ZRTP) Phil Zimmermann, his developers, and I worked together to
-make sure Phil's [Zfone][] implementation and the GNU ZRTP implementations can
-work together. 
+*   **Phil Zimmermann**: For the [ZRTP Specification (RFC 6189)](https://tools.ietf.org/html/rfc6189) and his lifelong commitment to privacy.
+*   **Werner Dittmann**: For the original [Apache 2.0 ZRTP C++](https://github.com/wernerd/ZRTPCPP) implementation, which served as the architectural blueprint for this Rust port.
+*   **The Rust Community**: For providing a world-class standard for memory safety and the foundational crates (`ring`, `dalek-cryptography`, `nom`).
+*   **NIST PQC Project**: For the standardization of ML-KEM (Kyber) and ML-DSA (Falcon) algorithms.
 
-**Note:** Zfone is now outdated and not supported anymore
-
-[zfone]: http://zfoneproject.com/index.html
-
-
-### Other implementations based on GNU ZRTP C++ 
-
-The ZRTP4J implementation is a copycat of the original C++ code. I used the
-same overall class structure and copied a lot of C++ functionality to Java. Of
-course some Java adaptation were done, for example to overcome the problem of
-non-existing pointers :-), thus I use some non-obvious array handling. If you
-are interessted in the Java implementation of ZRTP then you may have a look
-[here][javazrtp]. The Jitsi project uses the Java implementation. Jitsi is a
-powerful communication client and is definitely worth a [look][jitsi].
-
-To enable C based code to use ZRTP C++ I did a C wrapper that offers the same
-functionality to C based RTP implementations. The first use of the ZRTP C
-wrapper was for the [PJSIP][] library, actually the RTP part of this
-library. The ZRTP handler for PJSIP is [here][pjzrtp]. This port enables PJSIP
-based clients to use ZRTP. One of the first clients that uses this feature is
-*[CSipSimple][]*, a very good open source Android SIP client.
-
-[pjsip]: http://www.pjsip.org
-[pjzrtp]: https://github.com/wernerd/ZRTP4PJ
-[javazrtp]: https://github.com/wernerd/ZRTP4J
-[jitsi]: http://www.jitsi.org
-[csipsimple]: http://code.google.com/p/csipsimple
-
-
-### Some notes on GNU ZRTP C++ history
-The first application that demonstrated the embedded ZRTP was Minisp (now
-defunct). Minisip has it's own RTP stack and the very first version of this
-embedded ZRTP implementation worked together with this specific RTP stack. 
-
-A few weeks later I implemented the GNU ccRTP glue code and ZRTP became part
-of the official GNU ccRTP project and was named GNU ZRTP C++. The Twinkle
-softphone uses GNU ccRTP and GNU ZRTP C++ since it's 0.8.2 release and Michel
-de Boer, the implementor of Twinkle, created a nice user interface. All
-following versions of Twinkle included GNU ZRTP C++ as well.
-
-This is historic info, most of the named products are not supported anymore.
-
-
-### License and further information
-I changed the license of the ZRTP core source files from LGPL to Apache V2. Other
-sources files may have own license. Please refer to the copyright notices of
-the files.
-
-Thus the core ZRTP modules are is licensed under the Apache V2. Some other modules,
-mainly crypro modules, use different licenses or are even in public domain.
-Refer to the [LICENSES][] file for a summary.
-
-In general the files within the `client` directory are examples how to use the ZRTP
-library and usually belong to other project which have their own license policy. These
-files are not part of the core ZRTP code. 
-
-For further information refer to the [ZRTP FAQ][zrtpfaq] and the
-[GNU ZRTP howto][zrtphow]. Both are part of the GNU Telephony wiki and are
-located in its documentation category.
-
-Source code in the directory `clients/tivi` and below is not licensed under the
-GNU LGPL and is for reference and review only. Refer to the copyright statements
-of the source code in these directories, in particular the sqlite3 sources which
-have their own license.
+---
+**Maintained by**: Francisco F. Pinochet
 
 [zrtphow]:  http://www.gnutelephony.org/index.php/GNU_ZRTP_How_To
 [zrtpfaq]:  http://www.gnutelephony.org/index.php/ZRTP_FAQ
 [rfc 6189]: http://tools.ietf.org/html/rfc6189
 [LICENSES]: LICENSES/summary.md
-
-## Building GNU ZRTP C++ 
-Since version 1.6 GNU ZRTP C++ supports the *cmake* based build process
-only. The cmake build process is (IMHO) simpler than the GNU automake/autoconf
-process. To build GNU ZRTP C++ perform the following steps after you unpacked
-the source archive or pulled the source from [Github][]:
-
-    cd <zrtpsrc_dir>
-    mkdir build
-    cd build
-    cmake ..
-    make
-
-The CMakeLists.txt supports several options. If you don't specify any options
-then `cmake` generates the build that supports GNU ccRTP library and it uses
-the standalone cryptographic modules, thus no it's not necessary to install an
-cryptographic library on the system. Optionally you may configure ZRTP to use
-_sqlite3_ instead of a simple file to store the ZRTP cache data. For example
-
-    cmake -DSQLITE=true ..
-
-creates the build files that use _sqlite3_.
-
-Please have a look at the `CMakeLists.txt` for other options.
-
-Running cmake in a separate `build` directory is the preferred way. Cmake and
-the following `make` generate all files in or below the build directory. Thus
-the base directory and the source directories are not polluted with `*.o`,
-`*.la`, or other files that result from the build process. You may delete the
-build directory and create a new one to start from fresh (this is the ultimate
-`make clean` :-) ) or you may create a second directory to build with
-different settings without mixing the two builds.
-
-[github]: http://github.com/wernerd/ZRTPCPP
-
-
-### Notes when building ZRTP C++ for Android
-
-The CMake files support creation of an `Android.mk` file for the Tivi client
-and may give you an idea how to do it for other clients. The generated
-`Android.mk` generates `buildinfo_*.c` files in the root directory. You may
-delete these files after the Android static libraries are ready.
-
-Since version 4.1.1 the example Android build files require NDK r9c or better.

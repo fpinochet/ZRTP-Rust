@@ -22,6 +22,8 @@
 
 pub mod state;
 pub mod engine;
+pub mod options;
 
 pub use engine::ZrtpContext;
 pub use state::{ZrtpState, ZrtpEvent};
+pub use options::ZrtpOptions;

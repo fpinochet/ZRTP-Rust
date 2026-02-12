@@ -9,11 +9,11 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "5.0.1"
 edition = "2021"
 authors = ["Werner Dittmann", "Francisco Pinochet"]
 license = "Apache-2.0"
-repository = "https://github.com/fpinochet/ZRTPCPPtoRust"
+repository = "https://github.com/fpinochet/ZRTP-Rust.git"
 description = "A Rust implementation of the ZRTP protocol (RFC 6189)"
 
 [workspace.dependencies]

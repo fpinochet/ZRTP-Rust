@@ -2,5 +2,7 @@ Authors of GNU ZRTP
 
 Werner.Dittmann@t-online.de
 
-Werner Dittmann designed and implimented GNU ZRTP based on Phil Zimmermann's
+Werner Dittmann designed and implemented GNU ZRTP based on Phil Zimmermann's
 ZRTP specification.
+
+Francisco F. Pinochet implemented Werner Dittmann code C++ to rust.

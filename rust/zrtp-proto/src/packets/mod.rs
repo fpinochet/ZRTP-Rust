@@ -22,6 +22,7 @@ pub mod hello;
 pub mod commit;
 pub mod dh_part;
 pub mod confirm;
+pub mod fragment;
 pub mod other;
 
 pub use header::{ZrtpPacketHeader, ZRTP_MAGIC, ZRTP_ID};

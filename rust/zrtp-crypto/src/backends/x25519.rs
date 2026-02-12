@@ -24,14 +24,9 @@ use rand_core::OsRng;
 /// 
 /// Note: ZRTP manages public key exchange and shared secret computation at different 
 /// protocol stages.
+#[derive(Default)]
 pub struct X25519 {
     secret: Option<EphemeralSecret>,
-}
-
-impl Default for X25519 {
-    fn default() -> Self {
-        Self { secret: None }
-    }
 }
 
 impl DiffieHellman for X25519 {

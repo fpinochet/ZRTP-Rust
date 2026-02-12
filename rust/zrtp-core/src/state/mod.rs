@@ -42,6 +42,8 @@ pub enum ZrtpState {
     WaitConf2Ack,
     /// Secure state (handshake completed).
     Secure,
+    /// Security Warning state (e.g., MitM detected but Survivability is on).
+    SecurityWarning,
     /// Error state.
     Error,
 }
@@ -67,10 +69,14 @@ pub enum ZrtpEvent {
     Confirm2Received,
     /// Received a Conf2Ack packet.
     Conf2AckReceived,
+    /// Received a GoClear packet.
+    GoClearReceived,
     /// Retransmission timeout.
     Timeout,
     /// Protocol error occurred.
     Error(u32),
+    /// Security warning (MitM detected).
+    SecurityWarning(u32),
 }
 /// Protocol observer for state changes and events.
 pub trait ZrtpObserver: Send + Sync {

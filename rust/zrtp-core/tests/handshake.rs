@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-use zrtp_core::{ZrtpContext, ZrtpState, ZrtpEvent};
-use zrtp_crypto::backends::{Sha256, X25519};
+use zrtp_core::{ZrtpContext, ZrtpEvent, ZrtpState, ZrtpOptions};
+use zrtp_crypto::backends::Sha256;
 
 #[test]
 fn test_full_zrtp_handshake() {
@@ -25,14 +25,16 @@ fn test_full_zrtp_handshake() {
         Box::new(Sha256),
         Box::new(zrtp_crypto::backends::X25519::default()),
         Box::new(zrtp_crypto::backends::AesCfb128),
-        Box::new(zrtp_cache::InMemoryCache::new())
+        Box::new(zrtp_cache::InMemoryCache::new()),
+        ZrtpOptions::default()
     );
     let mut bob = ZrtpContext::new(
         [2u8; 12],
         Box::new(zrtp_crypto::backends::Sha256),
         Box::new(zrtp_crypto::backends::X25519::default()),
         Box::new(zrtp_crypto::backends::AesCfb128),
-        Box::new(zrtp_cache::InMemoryCache::new())
+        Box::new(zrtp_cache::InMemoryCache::new()),
+        ZrtpOptions::default()
     );
 
     // 1. Initial Start

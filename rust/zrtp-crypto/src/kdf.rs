@@ -45,6 +45,7 @@ pub struct ZrtpKeys {
 /// Derives the S0 intermediate secret as defined in RFC 6189 Section 4.4.1.
 /// 
 /// S0 = hash(1 | DHResult | "ZRTP-KDF" | ZIDi | ZIDr | total_hash | len(s1) | s1 | len(s2) | s2 | len(s3) | s3)
+#[allow(clippy::too_many_arguments)]
 pub fn derive_s0(
     hash: &dyn Hash,
     dh_result: &[u8],
@@ -55,6 +56,7 @@ pub fn derive_s0(
     s1: Option<&[u8]>,
     s2: Option<&[u8]>,
     s3: Option<&[u8]>,
+    hybrid_secret: Option<&[u8]>,
 ) -> Vec<u8> {
     let mut data = Vec::new();
     
@@ -73,6 +75,12 @@ pub fn derive_s0(
         } else {
             data.extend_from_slice(&0u32.to_be_bytes());
         }
+    }
+
+    if let Some(h_secret) = hybrid_secret {
+        data.extend_from_slice(b"HYBRID");
+        data.extend_from_slice(&(h_secret.len() as u32).to_be_bytes());
+        data.extend_from_slice(h_secret);
     }
     
     hash.digest(&data)
@@ -140,7 +148,7 @@ mod tests {
             &zid_i,
             &zid_r,
             &total_hash,
-            None, None, None
+            None, None, None, None
         );
         assert_eq!(s0.len(), 32);
     }

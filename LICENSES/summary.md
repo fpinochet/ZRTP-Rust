@@ -146,3 +146,17 @@ Refer to the copyright statements of the source code in these directories, in
 particular the sqlite3 sources which have their own license.
 
 [icuLicense]: https://www.unicode.org/copyright.html#License
+
+### Rust Ecosystem Credits (Modern Port)
+
+The Rust implementation of ZRTP utilizes several high-quality open-source libraries. Their licenses are incorporated by reference:
+
+*   **ring**: (ISC/OpenSSL) - Core cryptographic primitives (SHA-256, etc.).
+*   **x25519-dalek**: (BSD-3-Clause) - X25519 Elliptic Curve Diffie-Hellman implementation.
+*   **nom**: (MIT) - Parser combinator library used for bit-safe packet parsing.
+*   **rusqlite**: (MIT) - SQLite bindings for persistent secret storage.
+*   **anyhow / thiserror**: (MIT/Apache-2.0) - Error handling utilities.
+*   **byteorder / crc**: (MIT/Unlicense) - Low-level data manipulation.
+
+> [!NOTE]
+> The **Post-Quantum Hybrid (PQH)** features (ML-KEM/Kyber and Falcon) described in the documentation are currently in the **technical design and trait definition phase**. Implementation and integration with specific PQC providers are ongoing.
