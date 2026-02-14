@@ -1,4 +1,4 @@
-# Apache 2.0 ZRTP C++ & Rust Port
+# Apache 2.0 ZRTP Rust Port
 
 > [!IMPORTANT]
 > **Project Update: Rust Conversion Complete**
@@ -161,7 +161,6 @@ This project stands on the shoulders of giants:
 *   **NIST PQC Project**: For the standardization of ML-KEM (Kyber) and ML-DSA (Falcon) algorithms.
 
 ---
-**Maintained by**: Francisco F. Pinochet
 
 [zrtphow]:  http://www.gnutelephony.org/index.php/GNU_ZRTP_How_To
 [zrtpfaq]:  http://www.gnutelephony.org/index.php/ZRTP_FAQ
