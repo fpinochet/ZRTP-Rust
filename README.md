@@ -74,6 +74,9 @@ This implementation goes beyond standard RFC 6189 to provide state-of-the-art pr
 | **Memory Safety** | Native Rust rewrite | Zero Buffer Overflows | ✅ Implemented |
 | **Survival Mode** | Survival vs forced GoClear | Anti-DoS / Interception | ✅ Implemented |
 
+### Security Assessment & Threat Model
+For security researchers and auditors, a comprehensive [ZRTP Threat Model](THREAT_MODEL.md) is available. This document outlines trust boundaries, identified threat vectors (Network, Cryptographic, FFI), and the corresponding high-assurance mitigations implemented in v5.0.1.
+
 ---
 
 ## 4. Core Protocol & Integrity
